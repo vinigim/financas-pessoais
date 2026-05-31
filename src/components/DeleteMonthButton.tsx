@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from 'react'
 import { Trash2, AlertTriangle } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { deleteMonth } from '@/lib/actions'
 
 interface Props {
@@ -14,16 +13,13 @@ export function DeleteMonthButton({ headerRowIndex, monthLabel }: Props) {
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState('')
   const [isPending, startTransition] = useTransition()
-  const router = useRouter()
 
   function handleDelete() {
     startTransition(async () => {
       const result = await deleteMonth(headerRowIndex)
       if (result.ok) {
-        setConfirming(false)
-        // refresh forces the server component to re-fetch without relying on URL change
-        router.refresh()
-        router.push('/acerto')
+        // Hard navigate so the server re-fetches fresh data
+        window.location.href = '/acerto'
       } else {
         setError(result.error ?? 'Erro ao deletar')
       }
@@ -34,20 +30,20 @@ export function DeleteMonthButton({ headerRowIndex, monthLabel }: Props) {
     return (
       <div className="flex flex-wrap items-center gap-2">
         <AlertTriangle size={14} className="text-amber-400 shrink-0" />
-        <span className="text-xs text-zinc-400">
-          Deletar <span className="text-zinc-200 font-medium">{monthLabel}</span> e todas as despesas?
+        <span className="text-sm text-slate-300">
+          Deletar <span className="font-semibold text-white">{monthLabel}</span> e todas as despesas?
         </span>
         <button
           onClick={handleDelete}
           disabled={isPending}
-          className="text-xs px-2.5 py-1 rounded-lg bg-red-700 hover:bg-red-600 text-white font-medium disabled:opacity-50 transition-colors"
+          className="px-3 py-1.5 text-xs rounded-lg bg-red-600 hover:bg-red-500 text-white font-medium disabled:opacity-50 transition-colors"
         >
           {isPending ? 'Deletando...' : 'Confirmar'}
         </button>
         <button
           onClick={() => { setConfirming(false); setError('') }}
           disabled={isPending}
-          className="text-xs px-2.5 py-1 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+          className="px-3 py-1.5 text-xs rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700 disabled:opacity-50 transition-colors"
         >
           Cancelar
         </button>
@@ -57,16 +53,12 @@ export function DeleteMonthButton({ headerRowIndex, monthLabel }: Props) {
   }
 
   return (
-    <>
-      <button
-        onClick={() => setConfirming(true)}
-        className="flex items-center gap-1.5 text-xs text-zinc-600 hover:text-red-400 transition-colors"
-        title="Deletar este mês"
-      >
-        <Trash2 size={13} />
-        Deletar mês
-      </button>
-      {error && <span className="text-xs text-red-400 ml-2">{error}</span>}
-    </>
+    <button
+      onClick={() => setConfirming(true)}
+      className="flex items-center gap-1.5 text-sm text-red-400/70 hover:text-red-400 border border-red-400/20 hover:border-red-400/50 px-3 py-1.5 rounded-lg transition-colors"
+    >
+      <Trash2 size={13} />
+      Deletar mês
+    </button>
   )
 }
