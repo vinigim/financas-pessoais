@@ -43,8 +43,7 @@ export function NewMonthDialog({ lastSummary, lastBlock }: Props) {
       const action = clone ? createNewMonthWithClone : createNewMonth
       const result = await action({ monthLabel: label.trim() })
       if (result.ok) {
-        setOpen(false)
-        setError('')
+        window.location.href = '/acerto'
       } else {
         setError(result.error ?? 'Erro ao criar mês')
       }
@@ -86,7 +85,6 @@ export function NewMonthDialog({ lastSummary, lastBlock }: Props) {
             <span className="text-slate-500 text-xs ml-2">(saldo de {lastSummary.monthLabel})</span>
           </div>
 
-          {/* Clone toggle */}
           <button
             type="button"
             onClick={() => setClone((v) => !v)}
@@ -110,7 +108,7 @@ export function NewMonthDialog({ lastSummary, lastBlock }: Props) {
               </div>
               <div className="max-h-48 overflow-y-auto divide-y divide-slate-700">
                 {lastBlock.expenses.map((exp) => (
-                  <div key={exp.rowIndex} className="flex items-center justify-between px-3 py-2 text-sm">
+                  <div key={exp.id} className="flex items-center justify-between px-3 py-2 text-sm">
                     <span className="text-slate-300">{exp.description}</span>
                     <div className="flex items-center gap-2">
                       {exp.rawFormula && (

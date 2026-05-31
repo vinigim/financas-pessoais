@@ -15,7 +15,7 @@ export function MonthBlock({ block }: { block: MonthBlockType }) {
         </thead>
         <tbody className="divide-y divide-slate-700/50">
           {block.expenses.map((entry) => (
-            <ExpenseRow key={entry.rowIndex} entry={entry} />
+            <ExpenseRow key={entry.id} entry={entry} />
           ))}
           {block.expenses.length === 0 && (
             <tr>

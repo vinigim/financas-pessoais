@@ -17,14 +17,13 @@ export function ExpenseRow({ entry }: { entry: ExpenseEntry }) {
   function handleSave() {
     startTransition(async () => {
       const result = await updateExpense({
-        rowIndex: entry.rowIndex,
+        expenseId: entry.id,
         description: desc,
         value: parseFloat(val) || 0,
         formulaString: formula || undefined,
       })
       if (result.ok) {
-        setEditing(false)
-        setError('')
+        window.location.reload()
       } else {
         setError(result.error ?? 'Erro ao salvar')
       }
@@ -34,8 +33,12 @@ export function ExpenseRow({ entry }: { entry: ExpenseEntry }) {
   function handleDelete() {
     if (!confirm(`Remover "${entry.description}"?`)) return
     startTransition(async () => {
-      const result = await deleteExpense(entry.rowIndex)
-      if (!result.ok) setError(result.error ?? 'Erro ao remover')
+      const result = await deleteExpense(entry.id)
+      if (result.ok) {
+        window.location.reload()
+      } else {
+        setError(result.error ?? 'Erro ao remover')
+      }
     })
   }
 

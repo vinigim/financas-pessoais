@@ -1,4 +1,4 @@
-import { getAllMonthBlocks } from '@/lib/acerto'
+import { getAllMonthBlocks } from '@/lib/data'
 import type { ExpenseHistoryEntry } from '@/lib/types'
 import { MonthSelector } from '@/components/MonthSelector'
 import { SummaryCard } from '@/components/SummaryCard'
@@ -24,17 +24,14 @@ export default async function AcertoPage({ searchParams }: PageProps) {
   }
 
   const summaries = blocks.map((b) => ({
+    monthId: b.monthId,
     monthLabel: b.monthLabel,
-    headerRowIndex: b.headerRowIndex,
     saldo: b.saldo,
     valorAPagar: b.valorAPagar,
   }))
 
-  const selectedRow = params.mes
-    ? parseInt(params.mes)
-    : summaries[summaries.length - 1].headerRowIndex
-
-  const block = blocks.find((b) => b.headerRowIndex === selectedRow) ?? blocks[blocks.length - 1]
+  const selectedId = params.mes ? parseInt(params.mes) : summaries[summaries.length - 1].monthId
+  const block = blocks.find((b) => b.monthId === selectedId) ?? blocks[blocks.length - 1]
   const lastBlock = blocks[blocks.length - 1]
   const lastSummary = summaries[summaries.length - 1]
 
@@ -49,7 +46,6 @@ export default async function AcertoPage({ searchParams }: PageProps) {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8 space-y-4">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white">Acerto Gabi</h1>
         <span className="text-xs font-medium text-slate-400 bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-full">
@@ -57,21 +53,20 @@ export default async function AcertoPage({ searchParams }: PageProps) {
         </span>
       </div>
 
-      <MonthSelector summaries={summaries} currentRow={selectedRow} />
+      <MonthSelector summaries={summaries} currentMonthId={block.monthId} />
       <SummaryCard block={block} />
 
-      {/* Expense table + delete */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
             Despesas
           </h2>
-          <DeleteMonthButton headerRowIndex={block.headerRowIndex} monthLabel={block.monthLabel} />
+          <DeleteMonthButton monthId={block.monthId} monthLabel={block.monthLabel} />
         </div>
         <MonthBlock block={block} />
       </div>
 
-      <AddExpenseForm headerRowIndex={block.headerRowIndex} expenseHistory={expenseHistory} />
+      <AddExpenseForm monthId={block.monthId} expenseHistory={expenseHistory} />
 
       <div className="pt-2 border-t border-slate-700/50">
         <NewMonthDialog lastSummary={lastSummary} lastBlock={lastBlock} />

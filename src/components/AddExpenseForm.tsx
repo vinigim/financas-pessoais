@@ -22,11 +22,11 @@ const QUICK_ADD = [
 ]
 
 interface Props {
-  headerRowIndex: number
+  monthId: number
   expenseHistory: ExpenseHistoryEntry[]
 }
 
-export function AddExpenseForm({ headerRowIndex, expenseHistory }: Props) {
+export function AddExpenseForm({ monthId, expenseHistory }: Props) {
   const [open, setOpen] = useState(false)
   const [desc, setDesc] = useState('')
   const [value, setValue] = useState('')
@@ -63,17 +63,13 @@ export function AddExpenseForm({ headerRowIndex, expenseHistory }: Props) {
 
     startTransition(async () => {
       const result = await addExpense({
-        headerRowIndex,
+        monthId,
         description: desc.trim(),
         value: isNaN(numValue) ? 0 : numValue,
         formulaString: formula.trim() || undefined,
       })
       if (result.ok) {
-        setDesc('')
-        setValue('')
-        setFormula('')
-        setError('')
-        setOpen(false)
+        window.location.reload()
       } else {
         setError(result.error ?? 'Erro ao adicionar')
       }
@@ -82,7 +78,6 @@ export function AddExpenseForm({ headerRowIndex, expenseHistory }: Props) {
 
   return (
     <div className="space-y-3">
-      {/* Quick-add chips */}
       <div className="flex flex-wrap gap-2">
         {QUICK_ADD.map((item) => (
           <button

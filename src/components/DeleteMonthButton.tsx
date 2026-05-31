@@ -5,20 +5,19 @@ import { Trash2, AlertTriangle } from 'lucide-react'
 import { deleteMonth } from '@/lib/actions'
 
 interface Props {
-  headerRowIndex: number
+  monthId: number
   monthLabel: string
 }
 
-export function DeleteMonthButton({ headerRowIndex, monthLabel }: Props) {
+export function DeleteMonthButton({ monthId, monthLabel }: Props) {
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState('')
   const [isPending, startTransition] = useTransition()
 
   function handleDelete() {
     startTransition(async () => {
-      const result = await deleteMonth(headerRowIndex)
+      const result = await deleteMonth(monthId)
       if (result.ok) {
-        // Hard navigate so the server re-fetches fresh data
         window.location.href = '/acerto'
       } else {
         setError(result.error ?? 'Erro ao deletar')
