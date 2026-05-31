@@ -7,6 +7,7 @@ import {
   updateExpenseInSheet,
   deleteExpenseFromSheet,
   createNewMonthInSheet,
+  createNewMonthWithCloneInSheet,
 } from './acerto'
 import type { ActionResult } from './types'
 
@@ -86,6 +87,18 @@ export async function createNewMonth(data: unknown): Promise<ActionResult> {
   if (!parsed.success) return { ok: false, error: parsed.error.message }
   try {
     await createNewMonthInSheet(parsed.data.monthLabel)
+    revalidatePath('/acerto')
+    return { ok: true }
+  } catch (err) {
+    return handleError(err)
+  }
+}
+
+export async function createNewMonthWithClone(data: unknown): Promise<ActionResult> {
+  const parsed = NewMonthSchema.safeParse(data)
+  if (!parsed.success) return { ok: false, error: parsed.error.message }
+  try {
+    await createNewMonthWithCloneInSheet(parsed.data.monthLabel)
     revalidatePath('/acerto')
     return { ok: true }
   } catch (err) {

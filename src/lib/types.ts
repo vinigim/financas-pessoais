@@ -47,3 +47,10 @@ export interface ActionResult {
   ok: boolean
   error?: string
 }
+
+export interface ExpenseHistoryEntry {
+  monthLabel: string
+  description: string
+  resolvedValue: number
+  rawFormula: string | null
+}

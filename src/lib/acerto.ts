@@ -7,7 +7,7 @@ import {
   getCellNumber,
   getCellFormula,
 } from './excel'
-import type { MonthBlock, MonthSummary, ExpenseEntry } from './types'
+import type { MonthBlock, MonthSummary, ExpenseEntry, ExpenseHistoryEntry } from './types'
 
 const SENTINEL_HEADER = 'Mês Referência'
 const SENTINEL_TOTAL = 'TOTAL DESCONTOS'
@@ -127,6 +127,22 @@ export async function getMonthBlock(headerRowIndex: number): Promise<MonthBlock>
   const block = blocks.find((b) => b.headerRowIndex === headerRowIndex)
   if (!block) throw new Error(`Month block at row ${headerRowIndex} not found`)
   return block
+}
+
+export async function getAllExpenseHistory(): Promise<ExpenseHistoryEntry[]> {
+  const blocks = await getAllMonthBlocks()
+  const entries: ExpenseHistoryEntry[] = []
+  for (const block of blocks) {
+    for (const exp of block.expenses) {
+      entries.push({
+        monthLabel: block.monthLabel,
+        description: exp.description,
+        resolvedValue: exp.resolvedValue,
+        rawFormula: exp.rawFormula,
+      })
+    }
+  }
+  return entries
 }
 
 export async function getLastMonthBlock(): Promise<MonthBlock | null> {
@@ -287,6 +303,79 @@ export async function createNewMonthInSheet(monthLabel: string): Promise<void> {
   slr.getCell(2).value = { formula: `D${last.saldoRowIndex}`, result: last.saldo }
   slr.getCell(3).value = SENTINEL_SALDO
   slr.getCell(4).value = { formula: `B${dataRowNum}-D${totalRowNum}`, result: last.saldo }
+  slr.commit()
+
+  await saveWorkbook(wb)
+}
+
+export async function createNewMonthWithCloneInSheet(monthLabel: string): Promise<void> {
+  const wb = await openWorkbook()
+  const ws = getAcertoSheet(wb)
+  const blocks = _parseBlocks(ws)
+  if (blocks.length === 0) throw new Error('No existing blocks found')
+
+  const last = blocks[blocks.length - 1]
+  const lastRow = ws.rowCount
+  const valorAPagarFormula = `D${last.saldoRowIndex}`
+  const valorAPagarResult = last.saldo
+
+  // Blank spacer
+  ws.getRow(lastRow + 1).commit()
+
+  // Sentinel header row
+  const sentinelRowNum = lastRow + 2
+  const sr = ws.getRow(sentinelRowNum)
+  sr.getCell(1).value = 'Mês Referência'
+  sr.getCell(2).value = 'Valor a Pagar'
+  sr.getCell(3).value = 'Descontos Valor a Pagar'
+  sr.getCell(4).value = 'Valor (R$)'
+  sr.commit()
+
+  // Clone expenses from last block — one row per expense, minimum 1 row
+  const expenses = last.expenses
+  const firstDataRowNum = lastRow + 3
+  const numExpenseRows = Math.max(expenses.length, 1)
+
+  for (let i = 0; i < numExpenseRows; i++) {
+    const rowNum = firstDataRowNum + i
+    const row = ws.getRow(rowNum)
+    row.getCell(1).value = monthLabel
+    row.getCell(2).value = { formula: valorAPagarFormula, result: valorAPagarResult }
+    if (i < expenses.length) {
+      const exp = expenses[i]
+      row.getCell(3).value = exp.description
+      row.getCell(4).value = exp.rawFormula
+        ? { formula: exp.rawFormula, result: exp.resolvedValue }
+        : exp.resolvedValue
+    } else {
+      row.getCell(3).value = ''
+      row.getCell(4).value = ''
+    }
+    row.commit()
+  }
+
+  const totalRowNum = firstDataRowNum + numExpenseRows
+  const clonedTotal = expenses.reduce((s, e) => s + e.resolvedValue, 0)
+
+  const tr = ws.getRow(totalRowNum)
+  tr.getCell(1).value = monthLabel
+  tr.getCell(2).value = { formula: valorAPagarFormula, result: valorAPagarResult }
+  tr.getCell(3).value = SENTINEL_TOTAL
+  tr.getCell(4).value = {
+    formula: `SUM(D${firstDataRowNum}:D${firstDataRowNum + numExpenseRows - 1})`,
+    result: clonedTotal,
+  }
+  tr.commit()
+
+  const saldoRowNum = totalRowNum + 1
+  const slr = ws.getRow(saldoRowNum)
+  slr.getCell(1).value = monthLabel
+  slr.getCell(2).value = { formula: valorAPagarFormula, result: valorAPagarResult }
+  slr.getCell(3).value = SENTINEL_SALDO
+  slr.getCell(4).value = {
+    formula: `B${firstDataRowNum}-D${totalRowNum}`,
+    result: valorAPagarResult - clonedTotal,
+  }
   slr.commit()
 
   await saveWorkbook(wb)

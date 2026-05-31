@@ -1,4 +1,5 @@
-import { getMonthSummaries, getMonthBlock } from '@/lib/acerto'
+import { getAllMonthBlocks } from '@/lib/acerto'
+import type { ExpenseHistoryEntry } from '@/lib/types'
 import { MonthSelector } from '@/components/MonthSelector'
 import { SummaryCard } from '@/components/SummaryCard'
 import { MonthBlock } from '@/components/MonthBlock'
@@ -11,9 +12,9 @@ interface PageProps {
 
 export default async function AcertoPage({ searchParams }: PageProps) {
   const params = await searchParams
-  const summaries = await getMonthSummaries()
+  const blocks = await getAllMonthBlocks()
 
-  if (summaries.length === 0) {
+  if (blocks.length === 0) {
     return (
       <main className="max-w-3xl mx-auto px-4 py-8">
         <p className="text-zinc-500">Nenhum bloco encontrado na planilha.</p>
@@ -21,12 +22,30 @@ export default async function AcertoPage({ searchParams }: PageProps) {
     )
   }
 
+  const summaries = blocks.map((b) => ({
+    monthLabel: b.monthLabel,
+    headerRowIndex: b.headerRowIndex,
+    saldo: b.saldo,
+    valorAPagar: b.valorAPagar,
+  }))
+
   const selectedRow = params.mes
     ? parseInt(params.mes)
     : summaries[summaries.length - 1].headerRowIndex
 
-  const block = await getMonthBlock(selectedRow)
+  const block = blocks.find((b) => b.headerRowIndex === selectedRow) ?? blocks[blocks.length - 1]
+  const lastBlock = blocks[blocks.length - 1]
   const lastSummary = summaries[summaries.length - 1]
+
+  // Flat list of all historical expense entries (oldest → newest)
+  const expenseHistory: ExpenseHistoryEntry[] = blocks.flatMap((b) =>
+    b.expenses.map((e) => ({
+      monthLabel: b.monthLabel,
+      description: e.description,
+      resolvedValue: e.resolvedValue,
+      rawFormula: e.rawFormula,
+    }))
+  )
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-8">
@@ -40,8 +59,8 @@ export default async function AcertoPage({ searchParams }: PageProps) {
       <MonthSelector summaries={summaries} currentRow={selectedRow} />
       <SummaryCard block={block} />
       <MonthBlock block={block} />
-      <AddExpenseForm headerRowIndex={block.headerRowIndex} />
-      <NewMonthDialog lastSummary={lastSummary} />
+      <AddExpenseForm headerRowIndex={block.headerRowIndex} expenseHistory={expenseHistory} />
+      <NewMonthDialog lastSummary={lastSummary} lastBlock={lastBlock} />
     </main>
   )
 }

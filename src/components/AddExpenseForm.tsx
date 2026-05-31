@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { PlusCircle } from 'lucide-react'
+import { useState, useTransition, useMemo } from 'react'
+import { PlusCircle, History } from 'lucide-react'
 import { addExpense } from '@/lib/actions'
+import { formatBRL } from '@/lib/utils'
+import type { ExpenseHistoryEntry } from '@/lib/types'
 
 const QUICK_ADD = [
   { label: 'Daep', formula: '' },
@@ -19,7 +21,12 @@ const QUICK_ADD = [
   { label: 'Babá', formula: '' },
 ]
 
-export function AddExpenseForm({ headerRowIndex }: { headerRowIndex: number }) {
+interface Props {
+  headerRowIndex: number
+  expenseHistory: ExpenseHistoryEntry[]
+}
+
+export function AddExpenseForm({ headerRowIndex, expenseHistory }: Props) {
   const [open, setOpen] = useState(false)
   const [desc, setDesc] = useState('')
   const [value, setValue] = useState('')
@@ -27,11 +34,26 @@ export function AddExpenseForm({ headerRowIndex }: { headerRowIndex: number }) {
   const [error, setError] = useState('')
   const [isPending, startTransition] = useTransition()
 
+  // Last 3 occurrences of the current description, most recent first
+  const recentHistory = useMemo(() => {
+    if (!desc.trim()) return []
+    const needle = desc.trim().toLowerCase()
+    const matches = expenseHistory.filter(
+      (e) => e.description.toLowerCase() === needle
+    )
+    return matches.slice(-3).reverse()
+  }, [desc, expenseHistory])
+
   function prefill(item: { label: string; formula: string }) {
     setDesc(item.label)
     setFormula(item.formula)
     setValue('')
     setOpen(true)
+  }
+
+  function applyHistory(entry: ExpenseHistoryEntry) {
+    setValue(entry.resolvedValue.toString())
+    setFormula(entry.rawFormula ?? '')
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -74,7 +96,6 @@ export function AddExpenseForm({ headerRowIndex }: { headerRowIndex: number }) {
         ))}
       </div>
 
-      {/* Toggle form */}
       {!open && (
         <button
           onClick={() => setOpen(true)}
@@ -102,6 +123,36 @@ export function AddExpenseForm({ headerRowIndex }: { headerRowIndex: number }) {
               autoFocus
             />
           </div>
+
+          {/* Historical values */}
+          {recentHistory.length > 0 && (
+            <div className="rounded-lg border border-zinc-700/60 overflow-hidden">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800/60 border-b border-zinc-700/60">
+                <History size={12} className="text-zinc-500" />
+                <span className="text-xs text-zinc-500">Últimos valores — clique para usar</span>
+              </div>
+              <div className="divide-y divide-zinc-800">
+                {recentHistory.map((entry, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => applyHistory(entry)}
+                    className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-zinc-800/50 transition-colors text-left"
+                  >
+                    <span className="text-zinc-400">{entry.monthLabel}</span>
+                    <div className="flex items-center gap-2">
+                      {entry.rawFormula && (
+                        <span className="text-xs text-zinc-600 font-mono">={entry.rawFormula}</span>
+                      )}
+                      <span className={`font-medium tabular-nums ${entry.resolvedValue < 0 ? 'text-red-400' : 'text-zinc-200'}`}>
+                        {formatBRL(entry.resolvedValue)}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
