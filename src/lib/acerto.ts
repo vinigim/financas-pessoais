@@ -255,6 +255,25 @@ export async function deleteExpenseFromSheet(rowIndex: number): Promise<void> {
   await saveWorkbook(wb)
 }
 
+export async function deleteMonthFromSheet(headerRowIndex: number): Promise<void> {
+  const wb = await openWorkbook()
+  const ws = getAcertoSheet(wb)
+  const blocks = _parseBlocks(ws)
+
+  const block = blocks.find((b) => b.headerRowIndex === headerRowIndex)
+  if (!block) throw new Error(`Block at row ${headerRowIndex} not found`)
+
+  // sentinel row is always headerRowIndex - 1
+  const sentinelRow = block.headerRowIndex - 1
+  // include the blank spacer row before the sentinel, unless this is the very first block (sentinel at row 1)
+  const startRow = sentinelRow > 1 ? sentinelRow - 1 : sentinelRow
+  const rowCount = block.saldoRowIndex - startRow + 1
+
+  ws.spliceRows(startRow, rowCount)
+
+  await saveWorkbook(wb)
+}
+
 export async function createNewMonthInSheet(monthLabel: string): Promise<void> {
   const wb = await openWorkbook()
   const ws = getAcertoSheet(wb)

@@ -6,6 +6,7 @@ import {
   addExpenseToSheet,
   updateExpenseInSheet,
   deleteExpenseFromSheet,
+  deleteMonthFromSheet,
   createNewMonthInSheet,
   createNewMonthWithCloneInSheet,
 } from './acerto'
@@ -75,6 +76,17 @@ export async function deleteExpense(rowIndex: number): Promise<ActionResult> {
   if (!rowIndex || rowIndex < 1) return { ok: false, error: 'rowIndex inválido' }
   try {
     await deleteExpenseFromSheet(rowIndex)
+    revalidatePath('/acerto')
+    return { ok: true }
+  } catch (err) {
+    return handleError(err)
+  }
+}
+
+export async function deleteMonth(headerRowIndex: number): Promise<ActionResult> {
+  if (!headerRowIndex || headerRowIndex < 1) return { ok: false, error: 'headerRowIndex inválido' }
+  try {
+    await deleteMonthFromSheet(headerRowIndex)
     revalidatePath('/acerto')
     return { ok: true }
   } catch (err) {

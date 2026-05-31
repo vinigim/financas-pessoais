@@ -5,6 +5,7 @@ import { SummaryCard } from '@/components/SummaryCard'
 import { MonthBlock } from '@/components/MonthBlock'
 import { AddExpenseForm } from '@/components/AddExpenseForm'
 import { NewMonthDialog } from '@/components/NewMonthDialog'
+import { DeleteMonthButton } from '@/components/DeleteMonthButton'
 
 interface PageProps {
   searchParams: Promise<{ mes?: string }>
@@ -58,6 +59,9 @@ export default async function AcertoPage({ searchParams }: PageProps) {
 
       <MonthSelector summaries={summaries} currentRow={selectedRow} />
       <SummaryCard block={block} />
+      <div className="flex justify-end mb-2">
+        <DeleteMonthButton headerRowIndex={block.headerRowIndex} monthLabel={block.monthLabel} />
+      </div>
       <MonthBlock block={block} />
       <AddExpenseForm headerRowIndex={block.headerRowIndex} expenseHistory={expenseHistory} />
       <NewMonthDialog lastSummary={lastSummary} lastBlock={lastBlock} />
