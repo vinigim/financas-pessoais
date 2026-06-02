@@ -3,12 +3,7 @@ import type { MonthBlock } from '@/lib/types'
 
 export function SummaryCard({ block }: { block: MonthBlock }) {
   return (
-    <div className="grid grid-cols-3 gap-3">
-      <div className="rounded-xl bg-slate-800 border border-slate-700 p-4">
-        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">Valor a Pagar</p>
-        <p className="text-2xl font-bold text-amber-400">{formatBRL(block.valorAPagar)}</p>
-        <p className="text-xs text-slate-500 mt-1">saldo anterior</p>
-      </div>
+    <div className="grid grid-cols-2 gap-3">
       <div className="rounded-xl bg-slate-800 border border-slate-700 p-4">
         <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">Descontos</p>
         <p className="text-2xl font-bold text-blue-400">{formatBRL(block.totalDescontos)}</p>
