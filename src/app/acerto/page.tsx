@@ -47,7 +47,7 @@ export default async function AcertoPage({ searchParams }: PageProps) {
   return (
     <main className="max-w-3xl mx-auto px-4 py-8 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Acerto Gabi</h1>
+        <h1 className="text-2xl font-bold text-white">Controle Mensal Vi e Gabi</h1>
         <span className="text-xs font-medium text-slate-400 bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-full">
           {summaries.length} meses
         </span>
