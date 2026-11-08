@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Scale, Repeat } from 'lucide-react'
+import { Scale, Repeat, LogOut } from 'lucide-react'
+import { logout } from '@/lib/auth-actions'
 import { cn } from '@/lib/utils'
 
 const TABS = [
@@ -12,6 +13,7 @@ const TABS = [
 
 export function NavTabs() {
   const pathname = usePathname()
+  if (pathname.startsWith('/login')) return null
   return (
     <nav className="border-b border-slate-800 bg-slate-900/95 sticky top-0 z-10 backdrop-blur">
       <div className="max-w-3xl mx-auto px-4 flex gap-1">
@@ -33,6 +35,16 @@ export function NavTabs() {
             </Link>
           )
         })}
+        <form action={logout} className="ml-auto flex items-center">
+          <button
+            type="submit"
+            className="flex items-center gap-1.5 px-2 py-3 text-xs text-slate-500 hover:text-slate-200 transition-colors"
+            title="Sair"
+          >
+            <LogOut size={14} />
+            <span className="hidden sm:inline">Sair</span>
+          </button>
+        </form>
       </div>
     </nav>
   )
