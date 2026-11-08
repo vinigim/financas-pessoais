@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
+import { NavTabs } from "@/components/NavTabs";
 
 const geist = Geist({ subsets: ["latin"] });
 
@@ -13,6 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" className="h-full">
       <body className={`${geist.className} min-h-full bg-slate-900 text-slate-100 antialiased`}>
+        <NavTabs />
         {children}
       </body>
     </html>
