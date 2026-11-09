@@ -1,5 +1,5 @@
 import sql from './db'
-import type { Purchase, PaymentMethod } from './purchase-shared'
+import type { Purchase, PaymentMethod, FirstInstallmentOffset } from './purchase-shared'
 
 // Criada sob demanda, como a tabela de assinaturas.
 let schemaReady: Promise<void> | null = null
@@ -21,6 +21,12 @@ export function ensurePurchasesSchema(): Promise<void> {
           created_at TIMESTAMPTZ DEFAULT NOW()
         )
       `
+      // Adicionada depois: compras antigas ficam com 0 (mês da compra), como antes.
+      await sql`
+        ALTER TABLE online_purchases
+        ADD COLUMN IF NOT EXISTS first_installment_offset INTEGER NOT NULL DEFAULT 0
+          CHECK (first_installment_offset IN (0, 1))
+      `
     })().catch((err) => {
       schemaReady = null
       throw err
@@ -40,6 +46,7 @@ function toPurchase(r: Record<string, unknown>): Purchase {
     description: String(r.description ?? ''),
     totalAmount: Number(r.total_amount),
     installments: Number(r.installments),
+    firstInstallmentOffset: (Number(r.first_installment_offset ?? 0) === 1 ? 1 : 0) as FirstInstallmentOffset,
     category: String(r.category),
     paymentMethod: r.payment_method as PaymentMethod,
     notes: r.notes === null ? null : String(r.notes),
@@ -57,8 +64,8 @@ export type PurchaseInput = Omit<Purchase, 'id'>
 export async function insertPurchase(p: PurchaseInput): Promise<void> {
   await ensurePurchasesSchema()
   await sql`
-    INSERT INTO online_purchases (purchase_date, store, description, total_amount, installments, category, payment_method, notes)
-    VALUES (${p.date}, ${p.store}, ${p.description}, ${p.totalAmount}, ${p.installments}, ${p.category}, ${p.paymentMethod}, ${p.notes})
+    INSERT INTO online_purchases (purchase_date, store, description, total_amount, installments, first_installment_offset, category, payment_method, notes)
+    VALUES (${p.date}, ${p.store}, ${p.description}, ${p.totalAmount}, ${p.installments}, ${p.firstInstallmentOffset}, ${p.category}, ${p.paymentMethod}, ${p.notes})
   `
 }
 
@@ -67,7 +74,8 @@ export async function updatePurchaseRow(id: number, p: PurchaseInput): Promise<v
   await sql`
     UPDATE online_purchases
     SET purchase_date = ${p.date}, store = ${p.store}, description = ${p.description},
-        total_amount = ${p.totalAmount}, installments = ${p.installments}, category = ${p.category},
+        total_amount = ${p.totalAmount}, installments = ${p.installments},
+        first_installment_offset = ${p.firstInstallmentOffset}, category = ${p.category},
         payment_method = ${p.paymentMethod}, notes = ${p.notes}
     WHERE id = ${id}
   `

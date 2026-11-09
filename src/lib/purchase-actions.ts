@@ -12,6 +12,7 @@ const PurchaseSchema = z.object({
   description: z.string().trim().default(''),
   totalAmount: z.number().positive('O valor deve ser maior que zero'),
   installments: z.number().int().min(1).max(48, 'Máximo de 48 parcelas'),
+  firstInstallmentOffset: z.union([z.literal(0), z.literal(1)]).default(0),
   category: z.string().trim().min(1).default('Outros'),
   paymentMethod: z.enum(PAYMENT_METHODS),
   notes: z.string().trim().nullable().transform((v) => (v ? v : null)),
