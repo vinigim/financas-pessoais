@@ -4,10 +4,14 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createPurchase, updatePurchase } from '@/lib/purchase-actions'
 import {
+  FIRST_INSTALLMENT_OPTIONS,
   PAYMENT_METHODS,
   PURCHASE_CATEGORIES,
   QUICK_STORES,
   installmentValues,
+  addMonths,
+  monthLabel,
+  type FirstInstallmentOffset,
   type PaymentMethod,
   type Purchase,
 } from '@/lib/purchase-shared'
@@ -32,6 +36,7 @@ export function PurchaseForm({ initial, today, stores, categories, onDone }: Pro
   const [description, setDescription] = useState(initial?.description ?? '')
   const [amount, setAmount] = useState(initial ? String(initial.totalAmount) : '')
   const [installments, setInstallments] = useState(String(initial?.installments ?? 1))
+  const [firstOffset, setFirstOffset] = useState<FirstInstallmentOffset>(initial?.firstInstallmentOffset ?? 0)
   const [category, setCategory] = useState(initial?.category ?? 'Casa')
   const [payment, setPayment] = useState<PaymentMethod>(initial?.paymentMethod ?? 'Cartão de crédito')
   const [notes, setNotes] = useState(initial?.notes ?? '')
@@ -54,6 +59,7 @@ export function PurchaseForm({ initial, today, stores, categories, onDone }: Pro
       description,
       totalAmount: numAmount,
       installments: payment === 'Cartão de crédito' ? numInstallments : 1,
+      firstInstallmentOffset: payment === 'Cartão de crédito' ? firstOffset : 0,
       category: category || 'Outros',
       paymentMethod: payment,
       notes: notes || null,
@@ -70,7 +76,7 @@ export function PurchaseForm({ initial, today, stores, categories, onDone }: Pro
   }
 
   const showInstallments = payment === 'Cartão de crédito'
-  const parcels = showInstallments && numInstallments > 1 && numAmount > 0
+  const parcels = showInstallments && numInstallments > 1 && numAmount > 0 && /^\d{4}-\d{2}/.test(date)
     ? installmentValues(numAmount, numInstallments)
     : null
 
@@ -133,6 +139,22 @@ export function PurchaseForm({ initial, today, stores, categories, onDone }: Pro
             </select>
           </div>
         )}
+        {showInstallments && (
+          <div>
+            <label className={label}>{numInstallments > 1 ? '1ª parcela cai' : 'Cai na fatura'}</label>
+            <select
+              className={`${input} cursor-pointer`}
+              value={firstOffset}
+              onChange={(e) => setFirstOffset(Number(e.target.value) as FirstInstallmentOffset)}
+            >
+              {FIRST_INSTALLMENT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}{/^\d{4}-\d{2}/.test(date) ? ` (${monthLabel(addMonths(date.slice(0, 7), o.value))})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div>
           <label className={label}>Categoria</label>
           <input className={input} list="purchase-categories" value={category} onChange={(e) => setCategory(e.target.value)} />
@@ -150,7 +172,7 @@ export function PurchaseForm({ initial, today, stores, categories, onDone }: Pro
         <p className="text-xs text-slate-400">
           {numInstallments}x de <span className="font-semibold text-blue-300">{formatBRL(parcels[parcels.length - 1])}</span>
           {parcels[0] !== parcels[parcels.length - 1] && <> (1ª de {formatBRL(parcels[0])})</>}
-          , a partir do mês da compra.
+          , a partir de {monthLabel(addMonths(date.slice(0, 7), firstOffset))}.
         </p>
       )}
 

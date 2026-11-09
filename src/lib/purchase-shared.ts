@@ -28,6 +28,12 @@ export const QUICK_STORES = [
   'Temu',
 ]
 
+export const FIRST_INSTALLMENT_OPTIONS = [
+  { value: 0, label: 'No mês da compra' },
+  { value: 1, label: 'No mês seguinte' },
+] as const
+export type FirstInstallmentOffset = (typeof FIRST_INSTALLMENT_OPTIONS)[number]['value']
+
 export interface Purchase {
   id: number
   /** Data da compra, 'YYYY-MM-DD'. */
@@ -36,6 +42,8 @@ export interface Purchase {
   description: string
   totalAmount: number
   installments: number
+  /** Em que mês cai a 1ª parcela: 0 = mês da compra, 1 = mês seguinte. */
+  firstInstallmentOffset: FirstInstallmentOffset
   category: string
   paymentMethod: PaymentMethod
   notes: string | null
@@ -89,13 +97,13 @@ export interface MonthEntry {
 }
 
 /**
- * Parcelas que caem em cada mês. A 1ª parcela cai no mês da compra,
- * a 2ª no mês seguinte, e assim por diante.
+ * Parcelas que caem em cada mês. A 1ª cai no mês da compra ou no seguinte
+ * (firstInstallmentOffset), e as demais uma por mês a partir dela.
  */
 export function entriesByMonth(purchases: Purchase[]): Map<MonthKey, MonthEntry[]> {
   const map = new Map<MonthKey, MonthEntry[]>()
   for (const p of purchases) {
-    const start = monthKeyOf(p.date)
+    const start = addMonths(monthKeyOf(p.date), p.firstInstallmentOffset)
     installmentValues(p.totalAmount, p.installments).forEach((amount, i) => {
       const key = addMonths(start, i)
       const list = map.get(key) ?? []
