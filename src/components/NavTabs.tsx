@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Scale, Repeat, LogOut } from 'lucide-react'
+import { Scale, Repeat, ShoppingBag, LogOut } from 'lucide-react'
 import { logout } from '@/lib/auth-actions'
 import { cn } from '@/lib/utils'
 
 const TABS = [
   { href: '/acerto', label: 'Acerto', icon: Scale },
   { href: '/assinaturas', label: 'Assinaturas', icon: Repeat },
+  { href: '/compras', label: 'Compras', icon: ShoppingBag },
 ]
 
 export function NavTabs() {
@@ -24,7 +25,7 @@ export function NavTabs() {
               key={href}
               href={href}
               className={cn(
-                'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
+                'flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
                 active
                   ? 'border-blue-500 text-white'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
